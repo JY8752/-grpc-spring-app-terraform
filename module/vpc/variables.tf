@@ -1,5 +1,5 @@
 variable "input" {
   type        = any
   default     = {}
-  description = "input variables."
+  description = "input values. 'local.input' "
 }

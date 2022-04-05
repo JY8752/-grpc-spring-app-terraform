@@ -8,6 +8,15 @@ resource "aws_vpc" "default" {
   }
 }
 
+#VPCのセキュリティーグループ
+# module "vpc_sg" {
+#   source      = "./module/sg"
+#   name        = "${var.input.app_name}-vpc-sg"
+#   vpc_id      = aws_vpc.default.id
+#   port        = "80"
+#   cidr_blocks = ["0.0.0.0/0"]
+# }
+
 #パブリックサブネット
 resource "aws_subnet" "public_0" {
   vpc_id                  = aws_vpc.default.id
