@@ -1,5 +1,8 @@
+variable "aws_access_key" {}
+variable "secret_key" {}
 provider "aws" {
-  profile = ""
+  access_key = var.aws_access_key
+  secret_key = var.secret_key
 }
 module "vpc" {
   source = "./module/vpc"
