@@ -1,4 +1,6 @@
-provider "aws" {}
+provider "aws" {
+  profile = ""
+}
 module "vpc" {
   source = "./module/vpc"
   input  = local.input
