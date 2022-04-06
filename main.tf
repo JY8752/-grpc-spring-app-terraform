@@ -1,3 +1,6 @@
+provider "aws" {
+  region = "ap-northeast1"
+}
 module "vpc" {
   source = "./module/vpc"
   input  = local.input
