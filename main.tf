@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "ap-northeast1"
+  region = "ap-northeast-1"
 }
 module "vpc" {
   source = "./module/vpc"
