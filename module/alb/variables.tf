@@ -15,3 +15,13 @@ variable "vpc_id" {
   default     = ""
   description = "made by vpc module vpc id."
 }
+
+variable "acm_certificate_arn" {
+  type        = string
+  default     = null
+  description = "定義したSSL証明書のarn"
+}
+
+locals {
+  alb_account_id = "582318560864"
+}

@@ -12,8 +12,13 @@ resource "aws_alb" "default" {
   }
   security_groups = [
     module.http_sg.security_group_id,
-    module.https_sg.security_group_id
+    module.https_sg.security_group_id,
+    module.grpc_sg.security_group_id,
   ]
+
+  tags = {
+    Name = "${var.input.app_name}-alb"
+  }
 }
 
 #albログバケット
@@ -41,11 +46,25 @@ data "aws_iam_policy_document" "alb_log" {
   statement {
     effect    = "Allow"
     actions   = ["s3:PutObject"]
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_log.id}/*"]
+    resources = ["${aws_s3_bucket.alb_log.arn}/*"]
     principals {
       type        = "AWS"
-      identifiers = ["582318560864"]
+      identifiers = [local.alb_account_id]
     }
+  }
+}
+
+#バケットが空でないと削除できないのでdestroyトリガーに削除実行
+resource "null_resource" "default" {
+  triggers = {
+    bucket = aws_s3_bucket.alb_log.bucket
+  }
+  depends_on = [
+    aws_s3_bucket.alb_log
+  ]
+  provisioner "local-exec" {
+    when    = destroy
+    command = "aws s3 rm s3://${self.triggers.bucket} --recursive"
   }
 }
 
@@ -65,3 +84,50 @@ module "https_sg" {
   port        = 443
   cidr_blocks = ["0.0.0.0/0"]
 }
+
+module "grpc_sg" {
+  source      = "../sg"
+  name        = "${var.input.app_name}-alb-grpc-sg"
+  vpc_id      = var.vpc_id
+  port        = 6565
+  cidr_blocks = ["0.0.0.0/0"]
+}
+
+#ALBリスナー
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_alb.default.arn
+  port              = "80"
+  protocol          = "HTTP"
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_alb.default.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  certificate_arn   = var.acm_certificate_arn
+  default_action {
+    type = "fixed-response" #固定のHTTPレスポンス応答
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "これは「HTTPS」です"
+      status_code  = "200"
+    }
+  }
+}
+
+# resource "aws_lb_listener" "grpc" {
+#     load_balancer_arn = aws_alb.default.arn
+#   port              = "6565"
+#   protocol          = "HTTPS"
+#   default_action {
+#     type = "fixed-response" #固定のHTTPレスポンス応答
+#   }
+# }
