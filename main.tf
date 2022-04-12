@@ -4,10 +4,10 @@ module "vpc" {
 }
 
 module "alb" {
-  source  = "./module/alb"
-  input   = local.input
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
+  source              = "./module/alb"
+  input               = local.input
+  subnets             = module.vpc.public_subnets
+  vpc_id              = module.vpc.vpc_id
   acm_certificate_arn = module.route53.acm_certificate_arn
 }
 
