@@ -12,8 +12,7 @@ resource "aws_alb" "default" {
   }
   security_groups = [
     module.http_sg.security_group_id,
-    module.https_sg.security_group_id,
-    module.grpc_sg.security_group_id,
+    module.https_sg.security_group_id
   ]
 
   tags = {
@@ -85,14 +84,6 @@ module "https_sg" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
-module "grpc_sg" {
-  source      = "../sg"
-  name        = "${var.input.app_name}-alb-grpc-sg"
-  vpc_id      = var.vpc_id
-  port        = 6565
-  cidr_blocks = ["0.0.0.0/0"]
-}
-
 #ALBリスナー
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_alb.default.arn
@@ -112,22 +103,49 @@ resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_alb.default.arn
   port              = "443"
   protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2015-05"
   certificate_arn   = var.acm_certificate_arn
   default_action {
-    type = "fixed-response" #固定のHTTPレスポンス応答
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "これは「HTTPS」です"
-      status_code  = "200"
-    }
+    target_group_arn = aws_alb_target_group.alb.arn
+    type             = "forward"
   }
 }
 
-# resource "aws_lb_listener" "grpc" {
-#     load_balancer_arn = aws_alb.default.arn
-#   port              = "6565"
-#   protocol          = "HTTPS"
-#   default_action {
-#     type = "fixed-response" #固定のHTTPレスポンス応答
-#   }
-# }
+#ターゲットグループ
+resource "aws_alb_target_group" "alb" {
+  name        = "${var.input.app_name}-tg"
+  target_type = "ip"
+  port        = 6565
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    interval            = 30
+    path                = "/"
+    port                = 6565
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 2
+    matcher             = 200
+  }
+  depends_on = [
+    aws_alb.default
+  ]
+}
+
+resource "aws_lb_listener_rule" "default" {
+  # ルールを追加するリスナー
+  listener_arn = aws_lb_listener.https.arn
+
+  # 受け取ったトラフィックをターゲットグループへ受け渡す
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.alb.id
+  }
+
+  # ターゲットグループへ受け渡すトラフィックの条件
+  condition {
+    field  = "path-pattern"
+    values = ["*"]
+  }
+}

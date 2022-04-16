@@ -1,0 +1,21 @@
+[
+	{
+		"name": "${APP_NAME}",
+		"image": "nginx:latest",
+		"essential": true,
+		"logConfiguration": {
+			"logDriver": "awslogs",
+			"options": {
+				"awslogs-region": "ap-northeast-1",
+				"awslogs-stream-prefix": "${APP_NAME}",
+				"awslogs-group": "/ecs/${APP_NAME}"
+			}
+		},
+		"portMappings": [
+			{
+				"protocol": "tcp",
+				"containerPort": 6565
+			}
+		]
+	}
+]
