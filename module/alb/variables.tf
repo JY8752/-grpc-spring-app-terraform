@@ -23,8 +23,8 @@ variable "acm_certificate_arn" {
 }
 
 variable "acm_certificate" {
-  type = any
-  default = null
+  type        = any
+  default     = null
   description = "定義したSSL証明書"
 }
 

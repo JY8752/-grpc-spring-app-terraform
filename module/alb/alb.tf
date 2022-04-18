@@ -98,7 +98,7 @@ resource "aws_lb_listener" "http" {
     }
   }
 }
-  
+
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_alb.default.arn
   port              = "443"
@@ -139,7 +139,7 @@ resource "aws_alb_target_group" "alb" {
 resource "aws_lb_listener_rule" "default" {
   # ルールを追加するリスナー
   listener_arn = aws_lb_listener.https.arn
-  
+
   priority = 100
 
   # 受け取ったトラフィックをターゲットグループへ受け渡す
