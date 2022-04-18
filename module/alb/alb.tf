@@ -98,7 +98,7 @@ resource "aws_lb_listener" "http" {
     }
   }
 }
-
+  
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_alb.default.arn
   port              = "443"
@@ -109,20 +109,23 @@ resource "aws_lb_listener" "https" {
     target_group_arn = aws_alb_target_group.alb.arn
     type             = "forward"
   }
+  depends_on = [
+    var.acm_certificate
+  ]
 }
 
 #ターゲットグループ
 resource "aws_alb_target_group" "alb" {
   name        = "${var.input.app_name}-tg"
   target_type = "ip"
-  port        = 6565
+  port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
 
   health_check {
     interval            = 30
     path                = "/"
-    port                = 6565
+    port                = 80
     protocol            = "HTTP"
     timeout             = 5
     unhealthy_threshold = 2
@@ -136,16 +139,19 @@ resource "aws_alb_target_group" "alb" {
 resource "aws_lb_listener_rule" "default" {
   # ルールを追加するリスナー
   listener_arn = aws_lb_listener.https.arn
+  
+  priority = 100
 
   # 受け取ったトラフィックをターゲットグループへ受け渡す
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.alb.id
+    target_group_arn = aws_alb_target_group.alb.id
   }
 
   # ターゲットグループへ受け渡すトラフィックの条件
   condition {
-    field  = "path-pattern"
-    values = ["*"]
+    path_pattern {
+      values = ["/*"]
+    }
   }
 }

@@ -44,6 +44,29 @@ data "aws_iam_policy_document" "ecs_task_execution" {
   }
 }
 
+# #ECS Execロールの作成
+# module "ecs_exec_role" {
+#   source     = "../iam"
+#   name       = "ecs-task-execution"
+#   identifier = "ecs-tasks.amazonaws.com"
+#   policy     = data.aws_iam_policy_document.ecs_task_execution.json
+# }
+
+# #AmazonECSTaskExecutionRolePolicyの参照
+# data "aws_iam_policy" "ecs_task_execution_role_policy" {
+#   arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+# }
+
+# #ECSタスク実行IAMロールのポリシードキュメントの定義
+# data "aws_iam_policy_document" "ecs_task_execution" {
+#   source_policy_documents = [data.aws_iam_policy.ecs_task_execution_role_policy.policy] #既存ポリシーの継承 
+#   statement {
+#     effect    = "Allow"
+#     actions   = ["ssm:GetParameters", "kms:Decrypt"]
+#     resources = ["*"]
+#   }
+# }
+
 #サービス定義
 resource "aws_ecs_service" "default" {
   name                              = "${var.input.app_name}-ecs-service"
@@ -61,7 +84,7 @@ resource "aws_ecs_service" "default" {
   load_balancer {
     target_group_arn = var.target_group_arn
     container_name   = var.input.app_name
-    container_port   = 6565
+    container_port   = 80
   }
   lifecycle {
     ignore_changes = [task_definition] #リソースの初回作成時を除き変更を無視する
@@ -79,6 +102,6 @@ module "ecs_sg" {
   source      = "../sg"
   name        = "${var.input.app_name}-ecs-sg"
   vpc_id      = var.vpc_id
-  port        = 6565
+  port        = 80
   cidr_blocks = [var.vpc_cidr_block]
 }

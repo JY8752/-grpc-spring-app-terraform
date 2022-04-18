@@ -22,6 +22,12 @@ variable "acm_certificate_arn" {
   description = "定義したSSL証明書のarn"
 }
 
+variable "acm_certificate" {
+  type = any
+  default = null
+  description = "定義したSSL証明書"
+}
+
 locals {
   alb_account_id = "582318560864"
 }

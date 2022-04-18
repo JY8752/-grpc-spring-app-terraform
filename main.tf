@@ -9,6 +9,7 @@ module "alb" {
   subnets             = module.vpc.public_subnets
   vpc_id              = module.vpc.vpc_id
   acm_certificate_arn = module.route53.acm_certificate_arn
+  acm_certificate = module.route53.acm_certificate
 }
 
 module "route53" {
