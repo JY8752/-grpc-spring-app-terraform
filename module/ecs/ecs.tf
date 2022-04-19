@@ -105,3 +105,13 @@ module "ecs_sg" {
   port        = 80
   cidr_blocks = [var.vpc_cidr_block]
 }
+
+#ECR
+resource "aws_ecr_repository" "default" {
+  name                 = "${var.input.app_name}-ecr-repository"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
