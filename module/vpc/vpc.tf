@@ -38,7 +38,7 @@ resource "aws_internet_gateway" "default" {
 }
 
 #ルートテーブル
-resource "aws_route_table" "default" {
+resource "aws_route_table" "public" {
   vpc_id = aws_vpc.default.id
   tags = {
     Name = "${var.input.app_name}-route-table"
@@ -47,7 +47,7 @@ resource "aws_route_table" "default" {
 
 #ルート
 resource "aws_route" "default" {
-  route_table_id         = aws_route_table.default.id
+  route_table_id         = aws_route_table.public.id
   gateway_id             = aws_internet_gateway.default.id
   destination_cidr_block = "0.0.0.0/0"
 }
@@ -55,12 +55,35 @@ resource "aws_route" "default" {
 #ルートテーブルの関連付け
 resource "aws_route_table_association" "public_0" {
   subnet_id      = aws_subnet.public_0.id
-  route_table_id = aws_route_table.default.id
+  route_table_id = aws_route_table.public.id
 }
 
 resource "aws_route_table_association" "public_1" {
   subnet_id      = aws_subnet.public_1.id
-  route_table_id = aws_route_table.default.id
+  route_table_id = aws_route_table.public.id
+}
+
+#NATゲートウェイ
+resource "aws_eip" "nat_gateway_0" {
+  vpc        = true
+  depends_on = [aws_internet_gateway.default]
+}
+
+resource "aws_eip" "nat_gateway_1" {
+  vpc        = true
+  depends_on = [aws_internet_gateway.default]
+}
+
+resource "aws_nat_gateway" "nat_gateway_0" {
+  allocation_id = aws_eip.nat_gateway_0.id
+  subnet_id     = aws_subnet.public_0.id
+  depends_on    = [aws_internet_gateway.default]
+}
+
+resource "aws_nat_gateway" "nat_gateway_1" {
+  allocation_id = aws_eip.nat_gateway_1.id
+  subnet_id     = aws_subnet.public_1.id
+  depends_on    = [aws_internet_gateway.default]
 }
 
 #プライベートサブネット
@@ -81,4 +104,34 @@ resource "aws_subnet" "private_1" {
   tags = {
     Name = "${var.input.app_name}-private-subnet-0"
   }
+}
+
+resource "aws_route_table" "private_0" {
+  vpc_id = aws_vpc.default.id
+}
+
+resource "aws_route_table" "private_1" {
+  vpc_id = aws_vpc.default.id
+}
+
+resource "aws_route" "private_0" {
+  route_table_id         = aws_route_table.private_0.id
+  nat_gateway_id         = aws_nat_gateway.nat_gateway_0.id
+  destination_cidr_block = "0.0.0.0/0"
+}
+
+resource "aws_route" "private_1" {
+  route_table_id         = aws_route_table.private_1.id
+  nat_gateway_id         = aws_nat_gateway.nat_gateway_1.id
+  destination_cidr_block = "0.0.0.0/0"
+}
+
+resource "aws_route_table_association" "private_0" {
+  subnet_id      = aws_subnet.private_0.id
+  route_table_id = aws_route_table.private_0.id
+}
+
+resource "aws_route_table_association" "private_1" {
+  subnet_id      = aws_subnet.private_1.id
+  route_table_id = aws_route_table.private_1.id
 }
