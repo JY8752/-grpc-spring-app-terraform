@@ -116,20 +116,21 @@ resource "aws_lb_listener" "https" {
 
 #ターゲットグループ
 resource "aws_alb_target_group" "alb" {
-  name        = "${var.input.app_name}-tg"
-  target_type = "ip"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
+  name             = "${var.input.app_name}-tg"
+  target_type      = "ip"
+  port             = 6565
+  protocol         = "HTTP"
+  protocol_version = "GRPC"
+  vpc_id           = var.vpc_id
 
   health_check {
     interval            = 30
     path                = "/"
-    port                = 80
+    port                = 6565
     protocol            = "HTTP"
     timeout             = 5
     unhealthy_threshold = 2
-    matcher             = 200
+    matcher             = "0-99"
   }
   depends_on = [
     aws_alb.default

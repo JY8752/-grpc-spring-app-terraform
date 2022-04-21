@@ -84,7 +84,7 @@ resource "aws_ecs_service" "default" {
   load_balancer {
     target_group_arn = var.target_group_arn
     container_name   = var.input.app_name
-    container_port   = 80
+    container_port   = 6565
   }
   lifecycle {
     ignore_changes = [task_definition] #リソースの初回作成時を除き変更を無視する
@@ -102,7 +102,7 @@ module "ecs_sg" {
   source      = "../sg"
   name        = "${var.input.app_name}-ecs-sg"
   vpc_id      = var.vpc_id
-  port        = 80
+  port        = 6565
   cidr_blocks = [var.vpc_cidr_block]
 }
 

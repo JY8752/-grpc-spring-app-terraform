@@ -19,7 +19,7 @@ resource "aws_docdb_cluster" "default" {
   engine                  = "docdb"
   master_username         = var.input.docdb_username
   master_password         = random_password.password.result #あとで変える必要あり
-  backup_retention_period = 0                               #バックアップ保持期間
+  backup_retention_period = 1                               #バックアップ保持期間
   deletion_protection     = false                           #削除保護
   apply_immediately       = true                            #クラスターの変更を直ちに変更するかどうか
   port                    = 27017
